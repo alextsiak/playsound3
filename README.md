@@ -33,7 +33,7 @@ playsound("/path/to/sound/file.mp3")
 playsound("http://url/to/sound/file.mp3")
 
 # You can play sounds in the background
-sound = playsound("/path/to/sound/file.mp3", block=False)
+sound = playsound("/path/to/sound/file.mp3", block=False, loop=True)
 
 # and check if they are still playing
 if sound.is_alive():
@@ -52,6 +52,7 @@ def playsound(
     sound: str | Path,
     block: bool = True,
     backend: str | None = None,
+    loop: bool = False
 ) -> Sound
 ```
 
@@ -64,6 +65,9 @@ Determines whether the sound plays synchronously (blocking) or asynchronously (b
 `backend` (optional, default=`None`) \
 Specify which audio backend to use.
 If `None`, the best backend is determined automatically.
+
+`loop` (optional, default=`False`) \
+Loops track (only for Winmm backend).
 
 To see a list of backends supported by your system:
 
