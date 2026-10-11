@@ -85,7 +85,7 @@ class SoundBackend(ABC):
         raise NotImplementedError("check() must be implemented.")
 
     @abstractmethod
-    def play(self, sound: str) -> PopenLike:
+    def play(self, sound: str, loop: bool) -> PopenLike:
         raise NotImplementedError("play() must be implemented.")
 
 
@@ -222,8 +222,8 @@ class Winmm(SoundBackend):
         except (ImportError, FileNotFoundError, AttributeError):
             return False
 
-    def play(self, sound: str) -> backends.WinmmPopen:
-        return backends.WinmmPopen(sound)
+    def play(self, sound: str, loop: bool) -> backends.WinmmPopen:
+        return backends.WinmmPopen(sound, loop)
 
 
 class Afplay(SoundBackend):
@@ -287,10 +287,11 @@ class Sound:
         name: str,
         block: bool,
         backend: SoundBackend,
+        loop: bool
     ) -> None:
         """Initialize the player and begin playing."""
         self.backend: str = str(type(backend)).lower()
-        self.subprocess: PopenLike = backend.play(name)
+        self.subprocess: PopenLike = backend.play(name, loop)
 
         if block:
             self.wait()
@@ -319,6 +320,7 @@ def playsound(
     sound: str | Path,
     block: bool = True,
     backend: str | None = None,
+    loop: bool = False
 ) -> Sound:
     """Play a sound file using an available audio backend.
 
@@ -328,6 +330,7 @@ def playsound(
             - `True` (default): Wait until sound finishes playing.
             - `False`: Play sound in the background.
         backend: Specific audio backend to use. Leave None for automatic selection.
+        loop: Loop sound 
 
     Returns:
         Sound object for controlling playback.
@@ -350,7 +353,7 @@ def playsound(
         backend_obj = backend()
     else:
         raise PlaysoundException(f"invalid backend type '{type(backend)}'")
-    return Sound(path, block, backend_obj)
+    return Sound(path, block, backend_obj, loop)
 
 
 def _remove_cached_downloads(cache: dict[str, str]) -> None:

@@ -60,10 +60,11 @@ class WmplayerPopen:
 class WinmmPopen:
     """Popen-like object for Winmm backend."""
 
-    def __init__(self, sound: str):
+    def __init__(self, sound: str, loop: bool):
+        self.loop = loop
         self._playing: bool = True
         self.alias: str | None = None
-        self.thread: Thread = Thread(target=self._play, args=(sound,), daemon=True)
+        self.thread: Thread = Thread(target=self._play, args=(sound,loop), daemon=True)
         self.thread.start()
 
     def _send_winmm_mci_command(self, command: str) -> str:
@@ -81,12 +82,15 @@ class WinmmPopen:
             raise RuntimeError(f"winmm was not able to play the file! MCI error code: {error_code}")
         return buffer.value
 
-    def _play(self, sound: str) -> None:
+    def _play(self, sound: str, loop: bool) -> None:
         """Play a sound utilizing windll.winmm."""
         # Select a unique alias for the sound
         self.alias = str(uuid.uuid4())
         self._send_winmm_mci_command(f'open "{sound}" type mpegvideo alias {self.alias}')
-        self._send_winmm_mci_command(f"play {self.alias}")
+        if loop == False:
+            self._send_winmm_mci_command(f"play {self.alias}")
+        else:
+            self._send_winmm_mci_command(f"play {self.alias} repeat")
 
         while self._playing:
             time.sleep(WAIT_TIME)
@@ -97,6 +101,7 @@ class WinmmPopen:
         self._send_winmm_mci_command(f"stop {self.alias}")
         self._send_winmm_mci_command(f"close {self.alias}")
         self._playing = False
+        
 
     def terminate(self) -> None:
         self._playing = False
